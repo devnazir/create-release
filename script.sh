@@ -87,6 +87,17 @@ create_release() {
         install_gh
     fi
 
+    # when latest release is still draft, cant create a new release
+    current_version=$(git describe --tags --abbrev=0)
+    gh_flags="--json isDraft --json url --json tagName"
+    release_data=$(gh release view $current_version $gh_flags)
+    is_draft=$(echo $release_data | grep "\"isDraft\":true")
+
+    if [[ $is_draft ]]; then
+        echo "The latest release is still draft, please publish it first."
+        exit 1
+    fi
+
     yarn config set version-git-message "Bump version to v%s"
     yarn version --new-version $version
 
